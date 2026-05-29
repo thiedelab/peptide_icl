@@ -1,0 +1,42 @@
+# Large files that exceed GitHub limits
+*.csv
+*.txt
+*.png
+*.json
+*.pdb
+*.a3m
+*_env/
+anaconda_projects/
+localcolabfold/
+
+# tensor dumps
+*.pt
+
+# Compiler Output #
+###################
+*.py[cod]
+*.so
+*.o
+*.exe
+*.class
+
+# Folders #
+###########
+bin/
+build/
+dist/
+local/
+tmp/
+__pycache__/
+*.egg-info/
+.idea/
+.ipynb_checkpoints/
+.vscode/
+
+# Junk #
+########
+.DS_Store*
+.*.swp
+*.swp
+*.log
+*~

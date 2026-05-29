@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "peptide_icl"
+description = "In Context Learning in PLMs for Peptide Property Prediction"
+authors = [{ name = "Josh Almonte" }, {name = "Erik Thiede"}]
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["torch"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "numpy",
+    "torch",
+    "fair-esm",
+    "scikit-learn",
+    "matplotlib",
+    "tqdm",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+
+[project.scripts]
+peptide-icl = "peptide_icl.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
