@@ -83,6 +83,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="GGGGG",
         help="Linker inserted between context peptides when building prompts.",
     )
+    return parser
 
 
 def main(argv: list[str] | None = None) -> int:

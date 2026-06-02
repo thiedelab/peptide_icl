@@ -5,7 +5,8 @@ from typing import List, Union, Tuple
 
 
 def make_prompt_text(sequences, linker="GGGGG", query_len=15):
-    prompt = linker.join(sequences) + linker + ("<mask>" * query_len)
+    mask = "<mask>" * query_len
+    prompt = linker.join(sequences + [mask])
     return prompt
 
 
