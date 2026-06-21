@@ -1,6 +1,6 @@
 from peptide_icl._icl_scorer import (
     ICLScorer,
-    Tokenizer,
+    ESMTokenizer,
     PromptProcessor,
     QueryPeptideScorer,
     QueryPeptideScorer,

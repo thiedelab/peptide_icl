@@ -10,7 +10,7 @@ def make_prompt_text(sequences, linker="GGGGG", query_len=15):
     return prompt
 
 
-class Tokenizer(nn.Module):
+class ESMTokenizer(nn.Module):
     def __init__(self, alphabet):
         super().__init__()
 
@@ -137,7 +137,7 @@ class ICLScorer(nn.Module):
         else:
             self.plm, self.alphabet = esm_model
 
-        self.tokenizer = Tokenizer(self.alphabet)
+        self.tokenizer = ESMTokenizer(self.alphabet)
         self.prompt_processor = PromptProcessor(self.plm, self.tokenizer)
         self.log_prob_lookup_table = self.prompt_processor(
             self.positive_prompt, self.negative_prompt
