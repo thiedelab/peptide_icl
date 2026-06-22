@@ -6,6 +6,7 @@ from peptide_icl._icl_scorer import (
     QueryPeptideScorer,
     make_prompt_text,
 )
+from peptide_icl import progen
 
 __all__ = [
     "ICLScorer",
@@ -13,4 +14,5 @@ __all__ = [
     "PromptProcessor",
     "QueryPeptideScorer",
     "make_prompt_text",
+    "progen",
 ]

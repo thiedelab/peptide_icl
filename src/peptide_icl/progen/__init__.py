@@ -1,5 +1,5 @@
-from peptide_icl.progen.causal_scorer import AutoRegressive_Scorer
+from peptide_icl.progen._causal_scorer import AutoRegressiveScorer
 
 __all__ = [
-    "AutoRegressive_Scorer",
+    "AutoRegressiveScorer",
 ]

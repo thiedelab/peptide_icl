@@ -24,6 +24,7 @@ dependencies = [
     "scikit-learn",
     "matplotlib",
     "tqdm",
+    "transformers<5.0.0", # Progen uses old transformer API :(
 ]
 dynamic = ["version"]
 
