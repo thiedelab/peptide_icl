@@ -48,7 +48,9 @@ class AutoRegressiveScorer(nn.Module):
         # Build the residues with the prompt.
         batch = [prompt + self.linker + q for q in query_batch]
         inputs_encoded = self.tokenizer.encode_batch(batch)
-        input_ids = torch.tensor([enc.ids for enc in inputs_encoded], device=self.plm.device)
+        input_ids = torch.tensor(
+            [enc.ids for enc in inputs_encoded], device=self.plm.device
+        )
         return input_ids, query_encoded
 
     def _score_loop(self, query_batch: List[str], prompt: str) -> str:
@@ -57,25 +59,21 @@ class AutoRegressiveScorer(nn.Module):
         query_ids = torch.tensor([q.ids for q in query_encoded], device=self.plm.device)
         query_length = len(query_encoded[0])
         L = input_ids.shape[-1]
-        for k in range(-query_length+1, 1):
-            input_ids_k = input_ids[:, :(L + k)]
+        for k in range(-query_length + 1, 1):
+            input_ids_k = input_ids[:, : (L + k)]
             logits = self.plm(input_ids_k).logits[:, -1]
             query_ids_k = query_ids[:, k]
-            
-            score_k = logits[torch.arange(len(query_ids_k), device=query_ids_k.device),
-                            query_ids_k]
-            score +=  score_k
+
+            score_k = logits[
+                torch.arange(len(query_ids_k), device=query_ids_k.device), query_ids_k
+            ]
+            score += score_k
         return score
-
-
 
     def _score_one_pass(self, query_batch: List[str], prompt: str) -> str:
         K = len(query_batch[0])
 
-        input_ids, query_encoded = self._prepare_inputs(
-                query_batch, 
-                prompt
-            )
+        input_ids, query_encoded = self._prepare_inputs(query_batch, prompt)
 
         logits = self.plm(input_ids).logits[:, -K:]
         aa_scores = []
@@ -90,7 +88,7 @@ class AutoRegressiveScorer(nn.Module):
             scoring_fxn = self._score_loop
         else:
             scoring_fxn = self._score_one_pass
-        
+
         score = scoring_fxn(batch, self.positive_prompt)
         if self.negative_prompt is not None:
             negative_score = scoring_fxn(batch, self.negative_prompt)

@@ -6,10 +6,11 @@ import matplotlib.pyplot as plt
 import esm
 import pandas as pd
 
+
 def prepare_dataset(max_prompt_length):
-    df = pd.read_csv('mhc_dataset.csv')
-    sequences = list(df['sequence'])
-    true_labels = torch.tensor(df['labels'])
+    df = pd.read_csv("mhc_dataset.csv")
+    sequences = list(df["sequence"])
+    true_labels = torch.tensor(df["labels"])
 
     pos_train_seqs = sequences[:max_prompt_length]
     neg_train_seqs = sequences[-max_prompt_length:]
@@ -17,16 +18,17 @@ def prepare_dataset(max_prompt_length):
     test_labels = [1] * (250 - max_prompt_length) + [0] * (250 - max_prompt_length)
     return pos_train_seqs, neg_train_seqs, test_seqs, test_labels
 
+
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     prompt_lengths = [2, 4, 8, 16, 32]
     max_prompt_length = max(prompt_lengths)
     esm_model, alphabet = esm.pretrained.esm2_t6_8M_UR50D()
-    
+
     pos_train_seqs, neg_train_seqs, test_seqs, test_labels = prepare_dataset(
-            max_prompt_length
-        )
+        max_prompt_length
+    )
 
     roc_aucs = []
 
