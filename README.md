@@ -6,7 +6,7 @@ Peptide ICL is a tool for in-context learning of peptide sequences.  The tool us
 To install Peptide ICL, you can use pip.  First, clone the repository and navigate to the source directory:
 
 ```bash
-    git clone https://github.com/thiedelab/peptide-icl.git
+    git clone https://github.com/thiedelab/peptide_icl.git
     cd peptide-icl
 ```
 
