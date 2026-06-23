@@ -7,7 +7,7 @@ To install Peptide ICL, you can use pip.  First, clone the repository and naviga
 
 ```bash
     git clone https://github.com/thiedelab/peptide_icl.git
-    cd peptide-icl
+    cd peptide_icl
 ```
 
 Then, install the package.
