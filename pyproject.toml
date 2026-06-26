@@ -29,6 +29,14 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
+experiments = [
+    "pandas",
+    "scikit-learn",
+    "matplotlib",
+]
+tests = [
+    "pytest",
+]
 
 [project.scripts]
 peptide-icl = "peptide_icl.cli:main"
