@@ -3,21 +3,20 @@ import torch
 import torch.nn as nn
 from transformers import AutoModelForCausalLM
 from tokenizers import Tokenizer as ProGenTokenizer
-from torch.nn.functional import softmax
-
+from torch.nn.functional import log_softmax
 
 
 class AutoRegressiveScorer(nn.Module):
     def __init__(
         self,
-        positive_sequences,
+        positive_sequences, #can be '' or [] in the case n=0
         negative_sequences=None,
         progen_model: Union[
-            str, Tuple[torch.nn.Module, torch.nn.Module]
+            str, Tuple[torch.nn.Module, torch.nn.Module] #either pass the name of model, or initialized (model, tokenizer)
         ] = "hugohrban/progen2-medium",
         linker: str = "GGGGG",
         use_end_token: bool=False,
-        loop: bool = True,
+        loop: bool = True, #NOTE: AA-by-AA (loop=True) or every AA at once (loop=False)
     ):
         super().__init__()
 
@@ -30,24 +29,30 @@ class AutoRegressiveScorer(nn.Module):
 
         # Define prompts
         self.positive_prompt = linker.join(positive_sequences)
-        if negative_sequences is not None:
-            self.negative_prompt = linker.join(negative_sequences)
-        else:
+
+        #NOTE: Cannot handle negative_sequences = torch tensor yet!
+        if negative_sequences is None:
             self.negative_prompt = None
+        else:
+            self.negative_prompt = linker.join(negative_sequences)
         self.linker = linker
 
         # Build the model
         if isinstance(progen_model, str):
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
             self.plm = AutoModelForCausalLM.from_pretrained(
                 progen_model, trust_remote_code=True, torch_dtype="auto"
             )
+            self.plm = self.plm.to(device)
+            self.plm.eval() #make sure model in inference mode
             self.tokenizer = ProGenTokenizer.from_pretrained(progen_model)
             self.tokenizer.no_padding()
         else:
-            self.plm, self.tokenizer = progen_model
+            self.plm, self.tokenizer = progen_model #NOTE: Assuming that model has been sent to device prior
 
     def _complete_prompt(self, query: str, base_prompt:str):
-        prompt = self.linker.join([base_prompt, query])
+        # context + GGGGG + query (if context is not empty)
+        prompt = self.linker.join([base_prompt, query]) if base_prompt else query 
         prompt = "1" + prompt
         if self.use_end_token:
             prompt = prompt + "2"
@@ -71,11 +76,11 @@ class AutoRegressiveScorer(nn.Module):
         batch_indices = torch.arange(len(query_batch), device=self.plm.device)
         length_of_one_query = len(query_batch[0])
 
-        for k in range(1, length_of_one_query):
+        for k in range(0, length_of_one_query):
             query_batch_i = [q[:k] for q in query_batch]
             input_ids_k = self._prepare_inputs(query_batch_i, prompt)
             logits = self.plm(input_ids_k).logits[:, -1 + self.read_shift]
-            log_probabilites = softmax(logits, dim=-1)
+            log_probabilites = log_softmax(logits, dim=-1)
             score = score + log_probabilites[batch_indices, query_ids[:, k]]
         return score
 
@@ -87,22 +92,56 @@ class AutoRegressiveScorer(nn.Module):
 
         logits = self.plm(input_ids).logits
         logits = logits[:, logits.shape[1]-K+self.read_shift: logits.shape[1] + self.read_shift]
-        log_probabilites = softmax(logits, dim=-1)
+        log_probabilites = log_softmax(logits, dim=-1)
         aa_scores = []
         for i, q_enc in enumerate(query_encoded):
             aa_logits = log_probabilites[i][torch.arange(K), q_enc.ids]
             aa_scores.append(aa_logits.sum())
         return torch.stack(aa_scores)
 
-    def forward(self, batch):
-        """ """
-        if self.loop:
-            scoring_fxn = self._score_loop
-        else:
-            scoring_fxn = self._score_one_pass
+    def _score(self, batch):
+        scoring_fxn = self._score_loop if self.loop else self._score_one_pass
 
         score = scoring_fxn(batch, self.positive_prompt)
+
         if self.negative_prompt is not None:
-            negative_score = scoring_fxn(batch, self.negative_prompt)
-            score = score - negative_score
+            score -= scoring_fxn(batch, self.negative_prompt)
+
         return score
+
+    def forward(self, batch, batch_size=50):
+        outputs = []
+
+        batch_start = 0
+        while batch_start < len(batch):
+            batch_end = min(batch_start + batch_size, len(batch))
+            mini_batch = batch[batch_start:batch_end]
+
+            try:
+                with torch.no_grad():
+                    outputs.append(self._score(mini_batch))
+
+                batch_start = batch_end
+
+            except RuntimeError as e:
+                if "out of memory" in str(e).lower():
+                    torch.cuda.empty_cache()
+                    batch_size = max(1, int(batch_size / 2.5))
+                    print(f"[OOM] Reducing batch_size to {batch_size}, retrying from {batch_start}")
+                else:
+                    raise
+
+        return torch.cat(outputs)
+
+    # def forward(self, batch):
+    #     """ """
+    #     if self.loop:
+    #         scoring_fxn = self._score_loop
+    #     else:
+    #         scoring_fxn = self._score_one_pass
+
+    #     score = scoring_fxn(batch, self.positive_prompt)
+    #     if self.negative_prompt is not None:
+    #         negative_score = scoring_fxn(batch, self.negative_prompt)
+    #         score = score - negative_score
+    #     return score
