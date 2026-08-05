@@ -129,7 +129,7 @@ class AutoRegressiveScorer(nn.Module):
                     batch_size = max(1, int(batch_size / 2.5))
                     print(f"[OOM] Reducing batch_size to {batch_size}, retrying from {batch_start}")
                 else:
-                    raise
+                    raise RuntimeError('[OOM] Batch can no longer be reduced. Consider shorter prompts.')
 
         return torch.cat(outputs)
 
