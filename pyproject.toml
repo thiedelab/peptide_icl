@@ -24,10 +24,19 @@ dependencies = [
     "scikit-learn",
     "matplotlib",
     "tqdm",
+    "transformers<5.0.0", # Progen uses old transformer API :(
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
+experiments = [
+    "pandas",
+    "scikit-learn",
+    "matplotlib",
+]
+tests = [
+    "pytest",
+]
 
 [project.scripts]
 peptide-icl = "peptide_icl.cli:main"
